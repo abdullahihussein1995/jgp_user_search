@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JGP Data Lookup</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Add your CSS styles */
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f9ff;
+            color: #1e293b;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+        }
+        .search-box {
+            margin: 20px 0;
+        }
+        label {
+            font-weight: bold;
+        }
+        select, input, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #3b82f6;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f8fafc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>JGP Data Lookup</h1>
+            <p>Search and view participant information</p>
+        </div>
+
+        <div class="search-box">
+            <label for="county">County</label>
+            <select id="county">
+                <option value="">Select a county...</option>
+                {% for county in counties %}
+                    <option value="{{ county }}">{{ county }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="search-box">
+            <label for="idNumber">ID Number</label>
+            <input type="text" id="idNumber" placeholder="Enter ID Number">
+        </div>
+
+        <div class="search-box">
+            <label for="phoneNumber">Phone Number</label>
+            <input type="text" id="phoneNumber" placeholder="Enter Phone Number">
+        </div>
+
+        <div class="search-box">
+            <label for="fullName">Full Name</label>
+            <input type="text" id="fullName" placeholder="Enter Full Name">
+        </div>
+
+        <button id="searchButton">Search</button>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+     document.getElementById("searchButton").addEventListener("click", async () => {
+    const county = document.getElementById("county").value;
+    const idNumber = document.getElementById("idNumber").value.trim();
+    const phoneNumber = document.getElementById("phoneNumber").value.trim();
+    const fullName = document.getElementById("fullName").value.trim();
+
+    try {
+        const response = await fetch("/search", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ county, idNumber, phoneNumber, fullName }),
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error("Error from server:", errorText);
+            document.getElementById("results").innerHTML = `<p>Error: ${errorText}</p>`;
+            return;
+        }
+
+        const results = await response.json();
+        const resultsDiv = document.getElementById("results");
+
+        if (results.length === 0) {
+            resultsDiv.innerHTML = `<p>No matching records found.</p>`;
+        } else {
+            let tableHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Full Name</th>
+                            <th>ID Number</th>
+                            <th>Phone Number</th>
+                            <th>Email Address</th>
+                            <th>County</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            results.forEach(row => {
+                tableHTML += `
+                    <tr>
+                        <td>${row["Full Name"] || ""}</td>
+                        <td>${row["WHAT IS YOUR NATIONAL ID?"] || ""}</td>
+                        <td>${row["Phone Number"] || ""}</td>
+                        <td>${row["Email Address"] || ""}</td>
+                        <td>${row["County"] || ""}</td>
+                    </tr>
+                `;
+            });
+            tableHTML += "</tbody></table>";
+            resultsDiv.innerHTML = tableHTML;
+        }
+    } catch (error) {
+        console.error("Error during fetch:", error);
+        document.getElementById("results").innerHTML = `<p>Error: ${error.message}</p>`;
+    }
+});
+    </script>
+</body>
+</html>
