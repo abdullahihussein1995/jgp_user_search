@@ -94,10 +94,11 @@
           <label for="county" class="form-label">County</label>
           <select id="county" class="form-select">
             <option value="">Select...</option>
-            {% for county in counties %}
+            {% for county in counties|sort %}
               <option value="{{ county }}">{{ county }}</option>
             {% endfor %}
           </select>
+          
         </div>
         <div class="col">
           <label for="idNumber" class="form-label">ID Number</label>
@@ -134,7 +135,7 @@
             <th>Full Name</th>
             <th>ID Number</th>
             <th>Phone Number</th>
-            <th>Email</th>
+            <th>Date</th>
           </tr>
         </thead>
         <tbody id="resultsTable">
@@ -158,9 +159,7 @@
       const resultsPerPage = 10;
       let allResults = [];
 
-      function truncateEmail(email) {
-        return email.length > 19 ? email.substring(0, 19) + "..." : email;
-      }
+      
 
       function displayResults(page) {
         const start = (page - 1) * resultsPerPage;
@@ -179,7 +178,7 @@
                 <td>${row["Full Name"] || "-"}</td>
                 <td>${row["ID Number"] || "-"}</td>
                 <td>${row["Phone Number"] || "-"}</td>
-                <td class="email-truncate" title="${row["Email Address"] || "-"}">${truncateEmail(row["Email Address"] || "-")}</td>
+                <td>${row["Timestamp"] || "-"}</td>
               </tr>
             `;
           });
