@@ -98,7 +98,6 @@
               <option value="{{ county }}">{{ county }}</option>
             {% endfor %}
           </select>
-          
         </div>
         <div class="col">
           <label for="idNumber" class="form-label">ID Number</label>
@@ -159,8 +158,6 @@
       const resultsPerPage = 10;
       let allResults = [];
 
-      
-
       function displayResults(page) {
         const start = (page - 1) * resultsPerPage;
         const end = start + resultsPerPage;
@@ -172,13 +169,22 @@
           resultsHTML = `<tr><td colspan="5" class="text-center text-danger">No matching records found.</td></tr>`;
         } else {
           paginatedResults.forEach(row => {
+            // Format the Timestamp to mm-dd-yyyy
+            let formattedDate = "-";
+            if (row["Timestamp"]) {
+              const dateObj = new Date(row["Timestamp"]);
+              let month = (dateObj.getMonth() + 1).toString().padStart(2, '0');
+              let day = dateObj.getDate().toString().padStart(2, '0');
+              let year = dateObj.getFullYear();
+              formattedDate = `${month}-${day}-${year}`;
+            }
             resultsHTML += `
               <tr>
                 <td>${row.County || "-"}</td>
                 <td>${row["Full Name"] || "-"}</td>
                 <td>${row["WHAT IS YOUR NATIONAL ID?"] || "-"}</td>
                 <td>${row["Phone Number"] || "-"}</td>
-                <td>${row["Timestamp"] || "-"}</td>
+                <td>${formattedDate}</td>
               </tr>
             `;
           });
@@ -186,7 +192,7 @@
 
         resultsDiv.innerHTML = resultsHTML;
 
-        // Update the total records element (my opinion: this is where we display the count)
+        // Update the total records element
         totalRecordsDiv.innerHTML = `<strong>Total records: ${allResults.length}</strong>`;
 
         paginationDiv.innerHTML = `
@@ -216,7 +222,7 @@
         e.preventDefault();
         spinnerDiv.style.display = "block";
 
-        // Build your search payload. For demonstration, we're sending just the county value.
+        // Build your search payload
         const payload = { 
           county: document.getElementById("county").value,
           idNumber: document.getElementById("idNumber").value,
