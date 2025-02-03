@@ -6,7 +6,7 @@
     <title>JGP Data Lookup</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        /* Add your CSS styles */
+        /* Previous styles remain the same */
         body {
             font-family: 'Segoe UI', system-ui, sans-serif;
             margin: 0;
@@ -61,6 +61,26 @@
         th {
             background-color: #f8fafc;
         }
+
+        /* New pagination styles */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+            gap: 10px;
+        }
+        .pagination button {
+            width: auto;
+            padding: 8px 16px;
+        }
+        .pagination span {
+            margin: 0 10px;
+        }
+        .pagination button:disabled {
+            background-color: #94a3b8;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -98,35 +118,26 @@
         <button id="searchButton">Search</button>
 
         <div id="results"></div>
+        <div id="pagination" class="pagination"></div>
     </div>
 
     <script>
-     document.getElementById("searchButton").addEventListener("click", async () => {
-    const county = document.getElementById("county").value;
-    const idNumber = document.getElementById("idNumber").value.trim();
-    const phoneNumber = document.getElementById("phoneNumber").value.trim();
-    const fullName = document.getElementById("fullName").value.trim();
+        let currentPage = 1;
+        let allResults = [];
+        const resultsPerPage = 15;
 
-    try {
-        const response = await fetch("/search", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ county, idNumber, phoneNumber, fullName }),
-        });
+        function displayResults(page) {
+            const start = (page - 1) * resultsPerPage;
+            const end = start + resultsPerPage;
+            const paginatedResults = allResults.slice(start, end);
+            const resultsDiv = document.getElementById("results");
+            
+            if (paginatedResults.length === 0) {
+                resultsDiv.innerHTML = `<p>No matching records found.</p>`;
+                document.getElementById("pagination").style.display = "none";
+                return;
+            }
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error("Error from server:", errorText);
-            document.getElementById("results").innerHTML = `<p>Error: ${errorText}</p>`;
-            return;
-        }
-
-        const results = await response.json();
-        const resultsDiv = document.getElementById("results");
-
-        if (results.length === 0) {
-            resultsDiv.innerHTML = `<p>No matching records found.</p>`;
-        } else {
             let tableHTML = `
                 <table>
                     <thead>
@@ -140,7 +151,7 @@
                     </thead>
                     <tbody>
             `;
-            results.forEach(row => {
+            paginatedResults.forEach(row => {
                 tableHTML += `
                     <tr>
                         <td>${row["Full Name"] || ""}</td>
@@ -153,12 +164,64 @@
             });
             tableHTML += "</tbody></table>";
             resultsDiv.innerHTML = tableHTML;
+
+            // Update pagination
+            const totalPages = Math.ceil(allResults.length / resultsPerPage);
+            const paginationDiv = document.getElementById("pagination");
+            paginationDiv.style.display = "flex";
+            
+            paginationDiv.innerHTML = `
+                <button id="prevPage" ${page === 1 ? 'disabled' : ''}>Previous</button>
+                <span>Page ${page} of ${totalPages}</span>
+                <button id="nextPage" ${page === totalPages ? 'disabled' : ''}>Next</button>
+            `;
+
+            document.getElementById("prevPage")?.addEventListener("click", () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    displayResults(currentPage);
+                }
+            });
+
+            document.getElementById("nextPage")?.addEventListener("click", () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    displayResults(currentPage);
+                }
+            });
         }
-    } catch (error) {
-        console.error("Error during fetch:", error);
-        document.getElementById("results").innerHTML = `<p>Error: ${error.message}</p>`;
-    }
-});
+
+        document.getElementById("searchButton").addEventListener("click", async () => {
+            const county = document.getElementById("county").value;
+            const idNumber = document.getElementById("idNumber").value.trim();
+            const phoneNumber = document.getElementById("phoneNumber").value.trim();
+            const fullName = document.getElementById("fullName").value.trim();
+
+            try {
+                const response = await fetch("/search", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ county, idNumber, phoneNumber, fullName }),
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error("Error from server:", errorText);
+                    document.getElementById("results").innerHTML = `<p>Error: ${errorText}</p>`;
+                    document.getElementById("pagination").style.display = "none";
+                    return;
+                }
+
+                currentPage = 1;
+                allResults = await response.json();
+                displayResults(currentPage);
+
+            } catch (error) {
+                console.error("Error during fetch:", error);
+                document.getElementById("results").innerHTML = `<p>Error: ${error.message}</p>`;
+                document.getElementById("pagination").style.display = "none";
+            }
+        });
     </script>
 </body>
 </html>
