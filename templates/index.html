@@ -95,9 +95,9 @@
           <select id="county" class="form-select">
             <option value="">Select...</option>
             {% for county in counties|sort %}
-              <option value="{{ county }}">{{ county }}</option>
+              <option value="{{ county }}">{{ county|title }}</option>
             {% endfor %}
-          </select>
+          </select>                   
         </div>
         <div class="col">
           <label for="idNumber" class="form-label">ID Number</label>
